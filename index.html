@@ -30,6 +30,7 @@
         starsPayout: document.getElementById("starsPayout"),
       };
       console.log(elements);
+      updatePayoutTable();
     }, 1);
 
     function symbolValue(symbol) {
@@ -83,7 +84,7 @@
         track.innerHTML = `
           <div class="symbol-wrap">
             <img class="symbol symbol--normal" src="img/${name}.webp" alt="${name}">
-            <img class="symbol symbol--blur" src="img/${name}-blur.webp" alt="${name} blurred" aria-hidden="true">
+            <img class="symbol symbol--blur" src="img/${name}-blur.webp" alt="${name}" aria-hidden="true">
           </div>
         `;
         setTimeout(() => slot.classList.remove('is-settling'), 350);
@@ -127,7 +128,30 @@
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries">
               </div>
-              <span class="symbol-label">Cherries</span>
+              <span class="symbol-label">Cherries x 1</span>
+            </td>
+            <td class="payout"><span id="cherriesPayout">0</span></td>
+          </tr>
+          <tr>
+            <td class="symbol-cell">
+              <div class="symbol-wrap">
+                <img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries">
+                <img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries">
+              </div>
+              <span class="symbol-label">Cherries x 2</span>
+            </td>
+            <td class="payout"><span id="cherriesPayout">0</span></td>
+          </tr>
+          <tr>
+            <td class="symbol-cell">
+              <div class="symbol-wrap">
+                <img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                  class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                  class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries">
+                <img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries">
+                <img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries">
+              </div>
+              <span class="symbol-label">Cherries x 3</span>
             </td>
             <td class="payout"><span id="cherriesPayout">0</span></td>
           </tr>
