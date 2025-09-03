@@ -36,8 +36,7 @@ Payout table:
     stars: 10000x
 */
 
-let bankroll = 1000;
-
+window.currentBankroll = 1000;
 let currentBet = 1;
 
 const symbolsAmounts = {
@@ -46,7 +45,7 @@ const symbolsAmounts = {
   grapes: 21,
   watermelons: 15,
   bells: 9,
-  lucky7s: 7,
+  lucky7s: 6,
   stars: 3,
 };
 
@@ -62,12 +61,12 @@ const reel = [
 
 const allReels = [
   [...reel].sort(() => Math.random() - 0.5),
-  [...reel].sort(() => Math.random() - 0.5),
+  [...reel, "L"].sort(() => Math.random() - 0.5),
   [...reel].sort(() => Math.random() - 0.5),
 ];
 
 const multipliers = {
-  C: { two: 1.5, three: 2.5 },
+  C: { one: 1, two: 1.5, three: 2.5 },
   b: { three: 2 },
   G: { three: 5 },
   W: { three: 10 },
@@ -83,11 +82,11 @@ const spin = () => {
 
     results.push(allReels[i][randomSymbol]);
   }
-  bankroll = bankroll - currentBet + payout(results, currentBet);
+  window.currentBankroll += payout(results, currentBet);
   return results;
 };
 
-const spinResult = spin();
+// const spinResult = spin();
 
 const isWinner = (results) => {
   if (results[0] === results[1] && results[1] === results[2]) {
@@ -113,19 +112,19 @@ const increaseBet = () => {
 };
 
 function payout(results, bet) {
-  const counts = {};
-  let payoutAmount = 0;
-  for (let symbol of results) {
-    counts[symbol] ? (counts[symbol] += 1) : (counts[symbol] = 1);
+  if (results[0] === "C" && results[1] !== "C") {
+    return bet * multipliers[results[0]].one;
   }
 
-  for (let symbol in counts) {
-    if (counts[symbol] === 3 && multipliers[symbol]?.three) {
-      payoutAmount = bet * multipliers[symbol].three;
-    } else if (counts[symbol] === 2 && multipliers[symbol]?.two) {
-      payoutAmount = bet * multipliers[symbol].two;
+  if (results[0] === "C" && results[1] === "C" && results[2] !== "C") {
+    return bet * multipliers[results[0]].two;
+  }
+
+  for (const symbol in multipliers) {
+    if (results.every((s) => s === symbol) && multipliers[symbol]?.three) {
+      return bet * multipliers[symbol].three;
     }
   }
 
-  return payoutAmount;
+  return -bet;
 }

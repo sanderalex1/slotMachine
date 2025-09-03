@@ -9,7 +9,6 @@
   <script src="app.js" defer></script>
   <script defer>
     let bet = 1;
-    let balance = 100;
     let pl = 0;
 
     let elements = {};
@@ -17,7 +16,7 @@
     setTimeout(() => {
       elements = {
         win: document.getElementById("win"),
-        balance: document.getElementById("balance"),
+        bankroll: document.getElementById("bankroll"),
         bet: document.getElementById("bet"),
         spin: document.getElementById("spin"),
 
@@ -31,10 +30,13 @@
         lucky7sPayout: document.getElementById("lucky7sPayout"),
         starsPayout: document.getElementById("starsPayout"),
       };
+
       console.log(elements);
+      console.log(window.currentBankroll);
+      elements.bankroll.textContent = window.currentBankroll;
       updatePayoutTable();
       console.log("Payout test", payout(["C", "b", "b"], 1));
-    }, 1);
+    }, 100);
 
     function symbolValue(symbol) {
       return 1 + Math.floor(Math.random() * 10);
@@ -75,11 +77,12 @@
 
     function handleIncreaseBet() {
       increaseBet();
-      elements.bet.textContent = currentBet;
       updatePayoutTable();
+      elements.bet.textContent = currentBet;
     }
 
     async function handleSpin() {
+      elements.win.textContent = "";
       elements.spin.disabled = true;
       const result = spin();
       console.log(result);
@@ -122,17 +125,14 @@
       // all reels stopped
       elements.spin.disabled = false;
 
-      // Handle Spin payout
-      let payoutAmount = payout(result, bet);
-      console.log("Pre-win:", payoutAmount);
-      elements.win.textContent = "";
       if (isWinner(result)) {
-        payoutAmount += payout(result, bet);
-        console.log(payoutAmount);
-        balance += payoutAmount;
-        elements.win.textContent = payoutAmount;
+        elements.win.textContent = payout(result, currentBet);
+        elements.bankroll.textContent = window.currentBankroll;
+        console.log(`player won ${payout(result, currentBet)}`);
       }
     }
+
+
 
     updatePayoutTable();
   </script>
@@ -368,7 +368,7 @@
 
     <section class="slot-machine-bottom-row">
       <div class="balance">
-        <p>Balance: <span id="balance">100</span></p>
+        <p>Balance: <span id="bankroll"></span></p>
         <p>Bet: <span id="bet">1</span></p>
         <p>Win: <span id="win"></span></p>
       </div>
