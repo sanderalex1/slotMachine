@@ -1,11 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="app.js" defer></script>
-  </head>
-  <body></body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+
+</head>
+
+<body>
+  <script defer>
+    let bet = 1;
+    let balance = 100;
+    let pl = 0;
+
+    let elements
+
+    setTimeout(() => {
+      elements = {
+        win: document.getElementById("win"),
+        balance: document.getElementById("balance"),
+        bet: document.getElementById("bet"),
+        spin: document.getElementById("spin"),
+
+        cherriesPayout: document.getElementById("cherriesPayout"),
+        bananasPayout: document.getElementById("bananasPayout"),
+        grapesPayout: document.getElementById("grapesPayout"),
+        watermelonsPayout: document.getElementById("watermelonsPayout"),
+        bellsPayout: document.getElementById("bellsPayout"),
+        lucky7sPayout: document.getElementById("lucky7sPayout"),
+        starsPayout: document.getElementById("starsPayout"),
+      };
+      console.log(elements);
+    }, 1);
+
+    function symbolValue(symbol) {
+      return 1 + Math.floor(Math.random() * 10);
+    }
+
+    function updatePayoutTable() {
+      elements.cherriesPayout.textContent = symbolValue("cherries");
+      elements.bananasPayout.textContent = symbolValue("bananas");
+      elements.grapesPayout.textContent = symbolValue("grapes");
+      elements.watermelonsPayout.textContent = symbolValue("watermelons");
+      elements.bellsPayout.textContent = symbolValue("bells");
+      elements.lucky7sPayout.textContent = symbolValue("lucky7s");
+      elements.starsPayout.textContent = symbolValue("stars");
+    }
+
+    function handleIncreaseBet() {
+      bet++;
+      if (bet > 10) bet = 1;
+      elements.bet.textContent = bet;
+      updatePayoutTable();
+    }
+
+    async function handleSpin() {
+      elements.spin.disabled = true;
+      const result = spin();
+
+      // Do the reels animation
+      const reels = document.querySelectorAll(".reel");
+      reels.forEach(reel => {
+        reel.style.transform = `translateY(${Math.random() * 100}px)`;
+      });
+      setTimeout(() => {
+        reels.forEach(reel => {
+          reel.style.transform = `translateY(0)`;
+        });
+      }, 1000);
+      // Wait for the reels animation to finish
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setTimeout(() => {
+        handleSpin(result);
+        elements.spin.disabled = false;
+      }, 1000);
+
+      /// Handle Spin payout
+      let payout = 0;
+      let isWinner = isWinner(result);
+      win.textContent = "";
+      if (isWinner) {
+        payout = bet * symbolValue(result[0]);
+        balance += payout;
+        win.textContent = payout;
+      }
+    }
+
+    function isWinner() {
+      return false;
+    }
+
+    updatePayoutTable();
+  </script>
+  <main>
+    <section class="slot-machine-payout-table">
+      <h2>Payout Table</h2>
+      <table>
+        <thead>
+          <tr>Symbol</tr>
+          <tr>Payout</tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cherries</td>
+            <td><span id="cherriesPayout">0</span></td>
+          </tr>
+          <tr>
+            <td>Bananas</td>
+            <td><span id="bananasPayout">0</span></td>
+          </tr>
+          <tr>
+            <td>Grapes</td>
+            <td><span id="grapesPayout">0</span></td>
+          </tr>
+          <tr>
+            <td>Watermelons</td>
+            <td><span id="watermelonsPayout">0</span></td>
+          </tr>
+          <tr>
+            <td>Bells</td>
+            <td><span id="bellsPayout">0</span></td>
+          </tr>
+          <tr>
+            <td>Lucky-7s</td>
+            <td><span id="lucky7sPayout">0</span></td>
+          </tr>
+          <tr>
+            <td>Stars</td>
+            <td><span id="starsPayout">0</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="slot-machine">
+      <div class="reel">
+        <div class="slot">
+
+        </div>
+      </div>
+    </section>
+
+
+    <section class="slot-machine-reels">
+      <div class="reel">
+        <div class="slot"></div>
+      </div>
+      <div class="reel">
+        <div class="slot"></div>
+      </div>
+      <div class="reel">
+        <div class="slot"></div>
+      </div>
+    </section>
+
+
+    <section class="slot-machine-bottom-row">
+      <div class="balance">
+        <p>Balance: <span id="balance">100</span></p>
+        <p>Bet: <span id="bet">1</span></p>
+        <p>Win: <span id="win"></span></p>
+      </div>
+
+      <button onclick="handleIncreaseBet()">Increase Bet</button>
+      <button onclick="handleSpin()" id="spin">Spin</button>
+    </section>
+  </main>
+</body>
+
 </html>
