@@ -117,15 +117,26 @@ main {
 
 /* Spin animation - moves the slot-track continuously while spinning */
 .slot { overflow: hidden; }
-.slot-track { display: grid; gap: 8px; }
+.slot-track { display: grid; gap: 8px; will-change: transform; }
+.slot:not(.is-spinning) .slot-track { height: 100%; place-items: center; }
 @keyframes reel-spin {
   from { transform: translateY(0); }
-  to { transform: translateY(50%); }
+  to { transform: translateY(100%); }
 }
 .slot.is-spinning .slot-track { animation: reel-spin 0.9s linear infinite; }
 
 /* Make blurred sprite keep center as transform origin without cropping */
-.slot .symbol--blur { transform-origin: 128px 384px; }
+.slot .symbol--blur { transform-origin: 128px 384px; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+/* During spin, make blur fill the wrapper to increase perceived motion */
+.slot.is-spinning .symbol--blur { width: 100%; height: 100%; object-fit: cover; }
+
+/* Settle (bounce) animation on stop */
+@keyframes settle-bounce {
+  0% { transform: translateY(12px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+.slot.is-settling .symbol-wrap { animation: settle-bounce .35s cubic-bezier(.22,1,.36,1); }
 
 /* Balance and controls */
 .slot-machine-bottom-row {

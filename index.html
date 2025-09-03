@@ -63,28 +63,30 @@
       // start spinning (downwards) and blur only those reels
       slots.forEach(slot => slot.classList.add('is-spinning'));
 
-      // staggered stop: right reels keep spinning longer
+      // staggered stop: right reels keep spinning a bit longer
       for (let i = 0; i < slots.length; i++) {
         const slot = slots[i];
-        const delay = 400 + Math.random() * 500; // 400-900ms extra per reel
-        await new Promise(resolve => setTimeout(resolve, i === 0 ? 700 : delay));
+        const delay = 100 + Math.random() * 400; // 100-500ms
+        await new Promise(resolve => setTimeout(resolve, i === 0 ? 500 : delay));
 
         // stop this reel
         slot.classList.remove('is-spinning');
 
-        // replace content to show only the landed symbol for this reel
+        // replace content to show only the landed symbol for this reel with a quick settle
         const track = slot.querySelector('.slot-track');
         if (!track) continue;
         const symbolCode = result[i];
         const map = { C: 'cherries', b: 'bananas', G: 'grapes', W: 'watermelon', B: 'bells', L: 'lucky7s', S: 'stars' };
         const name = map[symbolCode];
         if (!name) continue;
+        slot.classList.add('is-settling');
         track.innerHTML = `
           <div class="symbol-wrap">
             <img class="symbol symbol--normal" src="img/${name}.webp" alt="${name}">
             <img class="symbol symbol--blur" src="img/${name}-blur.webp" alt="${name} blurred" aria-hidden="true">
           </div>
         `;
+        setTimeout(() => slot.classList.remove('is-settling'), 350);
       }
 
       // all reels stopped
