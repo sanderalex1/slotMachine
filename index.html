@@ -12,7 +12,7 @@
     let balance = 100;
     let pl = 0;
 
-    let elements
+    let elements = {};
 
     setTimeout(() => {
       elements = {
@@ -37,6 +37,7 @@
     }
 
     function updatePayoutTable() {
+      console.log(elements);
       elements.cherriesPayout.textContent = symbolValue("cherries");
       elements.bananasPayout.textContent = symbolValue("bananas");
       elements.grapesPayout.textContent = symbolValue("grapes");
@@ -56,38 +57,47 @@
     async function handleSpin() {
       elements.spin.disabled = true;
       const result = spin();
+      console.log(result);
 
-      // Do the reels animation
-      const reels = document.querySelectorAll(".reel");
-      reels.forEach(reel => {
-        reel.style.transform = `translateY(${Math.random() * 100}px)`;
-      });
-      setTimeout(() => {
-        reels.forEach(reel => {
-          reel.style.transform = `translateY(0)`;
-        });
-      }, 1000);
-      // Wait for the reels animation to finish
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const slots = Array.from(document.querySelectorAll('.slot'));
+      // start spinning (downwards) and blur only those reels
+      slots.forEach(slot => slot.classList.add('is-spinning'));
 
-      setTimeout(() => {
-        handleSpin(result);
-        elements.spin.disabled = false;
-      }, 1000);
+      // staggered stop: right reels keep spinning longer
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+        const delay = 400 + Math.random() * 500; // 400-900ms extra per reel
+        await new Promise(resolve => setTimeout(resolve, i === 0 ? 700 : delay));
 
-      /// Handle Spin payout
+        // stop this reel
+        slot.classList.remove('is-spinning');
+
+        // replace content to show only the landed symbol for this reel
+        const track = slot.querySelector('.slot-track');
+        if (!track) continue;
+        const symbolCode = result[i];
+        const map = { C: 'cherries', b: 'bananas', G: 'grapes', W: 'watermelon', B: 'bells', L: 'lucky7s', S: 'stars' };
+        const name = map[symbolCode];
+        if (!name) continue;
+        track.innerHTML = `
+          <div class="symbol-wrap">
+            <img class="symbol symbol--normal" src="img/${name}.webp" alt="${name}">
+            <img class="symbol symbol--blur" src="img/${name}-blur.webp" alt="${name} blurred" aria-hidden="true">
+          </div>
+        `;
+      }
+
+      // all reels stopped
+      elements.spin.disabled = false;
+
+      // Handle Spin payout
       let payout = 0;
-      let isWinner = isWinner(result);
-      win.textContent = "";
-      if (isWinner) {
+      elements.win.textContent = "";
+      if (isWinner(result)) {
         payout = bet * symbolValue(result[0]);
         balance += payout;
-        win.textContent = payout;
+        elements.win.textContent = payout;
       }
-    }
-
-    function isWinner() {
-      return false;
     }
 
     updatePayoutTable();
@@ -99,6 +109,10 @@
     <section class="slot-machine-payout-table">
       <h2>Payout Table</h2>
       <table>
+        <colgroup>
+          <col class="col-symbol">
+          <col class="col-payout">
+        </colgroup>
         <thead>
           <tr>
             <th>Symbol</th>
@@ -110,7 +124,6 @@
             <td class="symbol-cell">
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries">
-                <img class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true">
               </div>
               <span class="symbol-label">Cherries</span>
             </td>
@@ -120,7 +133,6 @@
             <td class="symbol-cell">
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas">
-                <img class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true">
               </div>
               <span class="symbol-label">Bananas</span>
             </td>
@@ -130,7 +142,6 @@
             <td class="symbol-cell">
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes">
-                <img class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true">
               </div>
               <span class="symbol-label">Grapes</span>
             </td>
@@ -140,8 +151,6 @@
             <td class="symbol-cell">
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons">
-                <img class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred"
-                  aria-hidden="true">
               </div>
               <span class="symbol-label">Watermelons</span>
             </td>
@@ -151,7 +160,6 @@
             <td class="symbol-cell">
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/bells.webp" alt="Bells">
-                <img class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true">
               </div>
               <span class="symbol-label">Bells</span>
             </td>
@@ -161,7 +169,6 @@
             <td class="symbol-cell">
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s">
-                <img class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true">
               </div>
               <span class="symbol-label">Lucky-7s</span>
             </td>
@@ -171,7 +178,6 @@
             <td class="symbol-cell">
               <div class="symbol-wrap">
                 <img class="symbol symbol--normal" src="img/stars.webp" alt="Stars">
-                <img class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true">
               </div>
               <span class="symbol-label">Stars</span>
             </td>
@@ -185,59 +191,119 @@
     <section class="slot-machine-reels">
       <div class="reel">
         <div class="slot">
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
-              class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
-              class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
-              class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
-              class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+          <div class="slot-track">
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
+                class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
+                class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
+                class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
+                class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
+                class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
+                class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
+            <!-- duplicate for seamless loop -->
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
+                class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
+                class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
+                class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
+                class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
+                class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
+                class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
           </div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
-              class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
-              class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
-              class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
         </div>
       </div>
       <div class="reel">
         <div class="slot">
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
-              class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
-              class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
-              class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
-              class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
-              class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+          <div class="slot-track">
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
+                class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
+                class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
+                class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
+                class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
+                class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
+                class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true">
+            </div>
+            <!-- duplicate for seamless loop -->
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
+                class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
+                class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
+                class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
+                class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
+                class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
+                class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true">
+            </div>
           </div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
-              class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
-              class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true"></div>
         </div>
       </div>
       <div class="reel">
         <div class="slot">
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
-              class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
-              class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
-              class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+          <div class="slot-track">
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
+                class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
+                class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
+                class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
+                class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
+                class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
+                class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
+            <!-- duplicate for seamless loop -->
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/stars.webp" alt="Stars"><img
+                class="symbol symbol--blur" src="img/stars-blur.webp" alt="Stars blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bells.webp" alt="Bells"><img
+                class="symbol symbol--blur" src="img/bells-blur.webp" alt="Bells blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/watermelon.webp" alt="Watermelons"><img
+                class="symbol symbol--blur" src="img/watermelon-blur.webp" alt="Watermelons blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
+                class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
+                class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
+                class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true">
+            </div>
+            <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
+                class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
           </div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/grapes.webp" alt="Grapes"><img
-              class="symbol symbol--blur" src="img/grapes-blur.webp" alt="Grapes blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/bananas.webp" alt="Bananas"><img
-              class="symbol symbol--blur" src="img/bananas-blur.webp" alt="Bananas blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/cherries.webp" alt="Cherries"><img
-              class="symbol symbol--blur" src="img/cherries-blur.webp" alt="Cherries blurred" aria-hidden="true"></div>
-          <div class="symbol-wrap"><img class="symbol symbol--normal" src="img/lucky7s.webp" alt="Lucky-7s"><img
-              class="symbol symbol--blur" src="img/lucky7s-blur.webp" alt="Lucky-7s blurred" aria-hidden="true"></div>
         </div>
       </div>
     </section>
