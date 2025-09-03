@@ -15,8 +15,8 @@
 spin() -> the symbols that it lands on
 something like: `["C", "C", "C"]`
 isWinner() : boolean
-payout() : number
 increaseBet() : number -> returns current bet after incrementing, wrap after 10 back to 1.
+payout() : number
 symbolValue(arr) : bet * 10
 
 
@@ -37,6 +37,8 @@ Payout table:
 */
 
 const bankroll = 1000;
+
+let currentBet = 1;
 
 const symbolsAmounts = {
   cherries: 39,
@@ -89,4 +91,13 @@ const isWinner = (results) => {
   } else {
     return false;
   }
+};
+
+const increaseBet = () => {
+  currentBet++;
+
+  if (currentBet > 10) {
+    currentBet = 1;
+  }
+  return currentBet;
 };
