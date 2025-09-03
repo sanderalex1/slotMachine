@@ -66,7 +66,6 @@ const allReels = [
 
 const spin = () => {
   const results = [];
-
   for (let i = 0; i < 3; i++) {
     let randomSymbol = Math.floor(Math.random() * allReels[i].length);
 
@@ -74,4 +73,20 @@ const spin = () => {
   }
 
   return results;
+};
+
+const spinResult = spin();
+
+const isWinner = (results) => {
+  if (results[0] === results[1] && results[1] === results[2]) {
+    return true;
+  } else if (
+    (results[0] === "C" && results[1] === "C") ||
+    (results[1] === "C" && results[2] === "C") ||
+    (results[0] === "C" && results[2] === "C")
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 };
