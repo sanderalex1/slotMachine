@@ -21,7 +21,9 @@
         bet: document.getElementById("bet"),
         spin: document.getElementById("spin"),
 
-        cherriesPayout: document.getElementById("cherriesPayout"),
+        cherries1Payout: document.getElementById("cherries1Payout"),
+        cherries2Payout: document.getElementById("cherries2Payout"),
+        cherries3Payout: document.getElementById("cherries3Payout"),
         bananasPayout: document.getElementById("bananasPayout"),
         grapesPayout: document.getElementById("grapesPayout"),
         watermelonsPayout: document.getElementById("watermelonsPayout"),
@@ -31,27 +33,49 @@
       };
       console.log(elements);
       updatePayoutTable();
+      console.log("Payout test", payout(["C", "b", "b"], 1));
     }, 1);
 
     function symbolValue(symbol) {
       return 1 + Math.floor(Math.random() * 10);
     }
+    const symbolNameByCode = { C: 'cherries', b: 'bananas', G: 'grapes', W: 'watermelon', B: 'bells', L: 'lucky7s', S: 'stars' };
+    const symbolOrder = ['cherries', 'bananas', 'grapes', 'watermelon', 'bells', 'lucky7s', 'stars'];
+    function buildTrackHTML(repetitions = 3, startIndex = 0) {
+      const order = symbolOrder.slice();
+      const len = order.length;
+      const shift = ((startIndex % len) + len) % len;
+      for (let i = 0; i < shift; i++) order.push(order.shift());
+      let html = '';
+      for (let r = 0; r < repetitions; r++) {
+        for (const name of order) {
+          html += `
+          <div class="symbol-wrap">
+            <img class="symbol symbol--normal" src="img/${name}.webp" alt="${name}">
+            <img class="symbol symbol--blur" src="img/${name}-blur.webp" alt="${name} blurred" aria-hidden="true">
+          </div>`;
+        }
+      }
+      return html;
+    }
 
     function updatePayoutTable() {
       console.log(elements);
-      elements.cherriesPayout.textContent = symbolValue("cherries");
-      elements.bananasPayout.textContent = symbolValue("bananas");
-      elements.grapesPayout.textContent = symbolValue("grapes");
-      elements.watermelonsPayout.textContent = symbolValue("watermelons");
-      elements.bellsPayout.textContent = symbolValue("bells");
-      elements.lucky7sPayout.textContent = symbolValue("lucky7s");
-      elements.starsPayout.textContent = symbolValue("stars");
+      elements.cherries1Payout.textContent = payout(["C", "b", "b"], currentBet);
+      elements.cherries2Payout.textContent = payout(["C", "C", "b"], currentBet);
+      elements.cherries3Payout.textContent = payout(["C", "C", "C"], currentBet);
+      elements.bananasPayout.textContent = payout(["b", "b", "b"], currentBet);
+      elements.grapesPayout.textContent = payout(["G", "G", "G"], currentBet);
+      elements.watermelonsPayout.textContent = payout(["W", "W", "W"], currentBet);
+      elements.bellsPayout.textContent = payout(["B", "B", "B"], currentBet);
+      elements.lucky7sPayout.textContent = payout(["L", "L", "L"], currentBet);
+      elements.starsPayout.textContent = payout(["S", "S", "S"], currentBet);
+      elements.bet.textContent = currentBet;
     }
 
     function handleIncreaseBet() {
-      bet++;
-      if (bet > 10) bet = 1;
-      elements.bet.textContent = bet;
+      increaseBet();
+      elements.bet.textContent = currentBet;
       updatePayoutTable();
     }
 
@@ -61,13 +85,19 @@
       console.log(result);
 
       const slots = Array.from(document.querySelectorAll('.slot'));
-      // start spinning (downwards) and blur only those reels
-      slots.forEach(slot => slot.classList.add('is-spinning'));
+      // Rebuild full tracks so multiple symbols pass by on every spin
+      for (let i = 0; i < slots.length; i++) {
+        const track = slots[i].querySelector('.slot-track');
+        if (!track) continue;
+        track.innerHTML = buildTrackHTML(3, Math.floor(Math.random() * symbolOrder.length));
+      }
+      // start spinning (downwards)
+      slots.forEach(slot => { slot.classList.remove('is-settling'); slot.classList.add('is-spinning'); });
 
       // staggered stop: right reels keep spinning a bit longer
       for (let i = 0; i < slots.length; i++) {
         const slot = slots[i];
-        const delay = 100 + Math.random() * 400; // 100-500ms
+        const delay = 100 + Math.random() * 800; // 100-500ms
         await new Promise(resolve => setTimeout(resolve, i === 0 ? 500 : delay));
 
         // stop this reel
@@ -77,8 +107,7 @@
         const track = slot.querySelector('.slot-track');
         if (!track) continue;
         const symbolCode = result[i];
-        const map = { C: 'cherries', b: 'bananas', G: 'grapes', W: 'watermelon', B: 'bells', L: 'lucky7s', S: 'stars' };
-        const name = map[symbolCode];
+        const name = symbolNameByCode[symbolCode];
         if (!name) continue;
         slot.classList.add('is-settling');
         track.innerHTML = `
@@ -94,12 +123,14 @@
       elements.spin.disabled = false;
 
       // Handle Spin payout
-      let payout = 0;
+      let payoutAmount = payout(result, bet);
+      console.log("Pre-win:", payoutAmount);
       elements.win.textContent = "";
       if (isWinner(result)) {
-        payout = bet * symbolValue(result[0]);
-        balance += payout;
-        elements.win.textContent = payout;
+        payoutAmount += payout(result, bet);
+        console.log(payoutAmount);
+        balance += payoutAmount;
+        elements.win.textContent = payoutAmount;
       }
     }
 
@@ -130,7 +161,7 @@
               </div>
               <span class="symbol-label">Cherries x 1</span>
             </td>
-            <td class="payout"><span id="cherriesPayout">0</span></td>
+            <td class="payout"><span id="cherries1Payout">0</span></td>
           </tr>
           <tr>
             <td class="symbol-cell">
@@ -140,7 +171,7 @@
               </div>
               <span class="symbol-label">Cherries x 2</span>
             </td>
-            <td class="payout"><span id="cherriesPayout">0</span></td>
+            <td class="payout"><span id="cherries2Payout">0</span></td>
           </tr>
           <tr>
             <td class="symbol-cell">
@@ -153,7 +184,7 @@
               </div>
               <span class="symbol-label">Cherries x 3</span>
             </td>
-            <td class="payout"><span id="cherriesPayout">0</span></td>
+            <td class="payout"><span id="cherries3Payout">0</span></td>
           </tr>
           <tr>
             <td class="symbol-cell">

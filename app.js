@@ -112,7 +112,7 @@ const increaseBet = () => {
   return currentBet;
 };
 
-const payout = (results, bet) => {
+function payout(results, bet) {
   const counts = {};
   let payoutAmount = 0;
   for (let symbol of results) {
@@ -128,4 +128,4 @@ const payout = (results, bet) => {
   }
 
   return payoutAmount;
-};
+}
