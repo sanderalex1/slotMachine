@@ -36,7 +36,7 @@ Payout table:
     stars: 10000x
 */
 
-const bankroll = 1000;
+let bankroll = 1000;
 
 let currentBet = 1;
 
@@ -66,6 +66,16 @@ const allReels = [
   [...reel].sort(() => Math.random() - 0.5),
 ];
 
+const multipliers = {
+  C: { two: 1.5, three: 2.5 },
+  b: { three: 2 },
+  G: { three: 5 },
+  W: { three: 10 },
+  B: { three: 50 },
+  L: { three: 700 },
+  S: { three: 1000 },
+};
+
 const spin = () => {
   const results = [];
   for (let i = 0; i < 3; i++) {
@@ -73,7 +83,7 @@ const spin = () => {
 
     results.push(allReels[i][randomSymbol]);
   }
-
+  bankroll = bankroll - currentBet + payout(results, currentBet);
   return results;
 };
 
@@ -100,4 +110,22 @@ const increaseBet = () => {
     currentBet = 1;
   }
   return currentBet;
+};
+
+const payout = (results, bet) => {
+  const counts = {};
+  let payoutAmount = 0;
+  for (let symbol of results) {
+    counts[symbol] ? (counts[symbol] += 1) : (counts[symbol] = 1);
+  }
+
+  for (let symbol in counts) {
+    if (counts[symbol] === 3 && multipliers[symbol]?.three) {
+      payoutAmount = bet * multipliers[symbol].three;
+    } else if (counts[symbol] === 2 && multipliers[symbol]?.two) {
+      payoutAmount = bet * multipliers[symbol].two;
+    }
+  }
+
+  return payoutAmount;
 };
